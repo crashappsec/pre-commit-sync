@@ -53,7 +53,7 @@ class Poetry(Manager):
     def version_for(cls, package: str, lockfile: Path) -> str:
         lock = cls.lockfile(lockfile)
         package = next(i for i in lock.search(package) if i.name == package)
-        return package.version
+        return str(package.version)
 
 
 MANAGER_MAPPING: typing.Dict[str, typing.Type[Manager]] = {

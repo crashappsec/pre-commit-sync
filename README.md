@@ -7,12 +7,14 @@ used to source the version from:
 
 ```yaml
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.971
+  rev: v0.971 # sync:mypy:poetry.lock
   hooks:
     - id: mypy
       additional_dependencies:
         - pytest # sync:poetry.lock
 ```
+
+You can also sync revisions of repos if they are pinned in lock file as well.
 
 Currently supported lock files:
 
