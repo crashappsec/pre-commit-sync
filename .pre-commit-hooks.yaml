@@ -9,5 +9,7 @@
   files: |
     (?x)^(
         .pre-commit-hooks.yaml|
-        .pre-commit-config.yaml
+        .pre-commit-config.yaml|
+        poetry.lock|
+        yarn.lock
     )$

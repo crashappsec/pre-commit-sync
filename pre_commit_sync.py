@@ -101,6 +101,8 @@ def main():
     args = parser.parse_args()
     for path in args.paths:
         to_sync = Path(path).resolve()
+        if to_sync.suffix not in [".yaml", ".yml"]:
+            continue
         data = "\n".join(sync(to_sync.read_text(), to_sync)).strip() + "\n"
         if args.write:
             path.write_text(data)
