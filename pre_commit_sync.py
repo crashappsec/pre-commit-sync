@@ -46,8 +46,14 @@ class Poetry:
         return package.version
 
 
+LOCK_MAPPING = {
+    "poetry.lock": Poetry,
+    "yarn.lock": Yarn,
+}
+
+
 SYNC_PATTERN = re.compile(
-    r"""
+    rf"""
     ^
     (?P<prefix>
         \s+
@@ -55,7 +61,8 @@ SYNC_PATTERN = re.compile(
         \s+
     )
     (?P<quote>['"]?)
-    (?P<package>.+?)((@|==).+?)?
+    (?P<package>.+?)
+    (({'|'.join(i.comparator for i in LOCK_MAPPING.values())}).+?)?
     ['"]?
     (?P<sync>
     \s+
@@ -65,11 +72,6 @@ SYNC_PATTERN = re.compile(
     """,
     re.VERBOSE,
 )
-
-LOCK_MAPPING = {
-    "poetry.lock": Poetry,
-    "yarn.lock": Yarn,
-}
 
 
 def sync(text: str, path: Path):
