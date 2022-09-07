@@ -10,6 +10,7 @@ from pyarn.lockfile import Lockfile
 
 
 class Yarn:
+    comparator = "@"
     lockfiles = {}
 
     @classmethod
@@ -26,6 +27,7 @@ class Yarn:
 
 
 class Poetry:
+    comparator = "=="
     lockfiles: typing.Dict[Path, Repository] = {}
 
     @classmethod
@@ -53,7 +55,7 @@ SYNC_PATTERN = re.compile(
         \s+
     )
     (?P<quote>['"]?)
-    (?P<package>.+?)(@.+?)?
+    (?P<package>.+?)((@|==).+?)?
     ['"]?
     (?P<sync>
     \s+
@@ -79,8 +81,9 @@ def sync(text: str, path: Path):
             package = search.group("package")
             lockfile = (path.parent / search.group("lockfile")).resolve()
             sync_comment = search.group("sync")
-            version = LOCK_MAPPING[lockfile.name].version_for(package, lockfile)
-            yield f"{prefix}{quote}{package}@{version}{quote}{sync_comment}"
+            manager = LOCK_MAPPING[lockfile.name]
+            version = manager.version_for(package, lockfile)
+            yield f"{prefix}{quote}{package}{manager.comparator}{version}{quote}{sync_comment}"
         else:
             yield line
 
