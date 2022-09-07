@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import abc
 import argparse
 import re
 import typing
@@ -9,7 +10,16 @@ from poetry.repositories.repository import Repository
 from pyarn.lockfile import Lockfile
 
 
-class Yarn:
+class Manager(abc.ABC):
+    comparator: str = NotImplemented
+
+    @classmethod
+    @abc.abstractmethod
+    def version_for(cls, package: str, lockfile: Path) -> str:
+        """ """
+
+
+class Yarn(Manager):
     comparator = "@"
     lockfiles = {}
 
@@ -26,7 +36,7 @@ class Yarn:
         return package.version
 
 
-class Poetry:
+class Poetry(Manager):
     comparator = "=="
     lockfiles: typing.Dict[Path, Repository] = {}
 
@@ -46,13 +56,13 @@ class Poetry:
         return package.version
 
 
-LOCK_MAPPING = {
+MANAGER_MAPPING: typing.Dict[str, typing.Type[Manager]] = {
     "poetry.lock": Poetry,
     "yarn.lock": Yarn,
 }
 
 
-SYNC_PATTERN = re.compile(
+PACKAGE_PATTERN = re.compile(
     rf"""
     ^
     (?P<prefix>
@@ -62,7 +72,7 @@ SYNC_PATTERN = re.compile(
     )
     (?P<quote>['"]?)
     (?P<package>.+?)
-    (({'|'.join(i.comparator for i in LOCK_MAPPING.values())}).+?)?
+    (({'|'.join(i.comparator for i in MANAGER_MAPPING.values())}).+?)?
     ['"]?
     (?P<sync>
     \s+
@@ -74,18 +84,54 @@ SYNC_PATTERN = re.compile(
 )
 
 
+REV_PATTERN = re.compile(
+    r"""
+    ^
+    (?P<prefix>
+        \s+
+        rev:
+        \s+
+    )
+    (?P<quote>['"]?)
+    (?P<version>.+?)
+    ['"]?
+    (?P<sync>
+    \s+
+        [#]\s+
+        sync
+        :
+        (?P<package>.+)
+        :
+        (?P<lockfile>.+)
+    )
+    $
+    """,
+    re.VERBOSE,
+)
+
+
 def sync(text: str, path: Path):
     for line in text.splitlines():
-        search = SYNC_PATTERN.search(line)
-        if search:
-            prefix = search.group("prefix")
-            quote = search.group("quote") or '"'
-            package = search.group("package")
-            lockfile = (path.parent / search.group("lockfile")).resolve()
-            sync_comment = search.group("sync")
-            manager = LOCK_MAPPING[lockfile.name]
+        package_search = PACKAGE_PATTERN.search(line)
+        rev_search = REV_PATTERN.search(line)
+        if package_search:
+            prefix = package_search.group("prefix")
+            quote = package_search.group("quote") or '"'
+            package = package_search.group("package")
+            lockfile = (path.parent / package_search.group("lockfile")).resolve()
+            sync_comment = package_search.group("sync")
+            manager = MANAGER_MAPPING[lockfile.name]
             version = manager.version_for(package, lockfile)
             yield f"{prefix}{quote}{package}{manager.comparator}{version}{quote}{sync_comment}"
+        elif rev_search:
+            prefix = rev_search.group("prefix")
+            quote = rev_search.group("quote") or ""
+            package = rev_search.group("package")
+            lockfile = (path.parent / rev_search.group("lockfile")).resolve()
+            sync_comment = rev_search.group("sync")
+            manager = MANAGER_MAPPING[lockfile.name]
+            version = manager.version_for(package, lockfile)
+            yield f"{prefix}{quote}{version}{quote}{sync_comment}"
         else:
             yield line
 
