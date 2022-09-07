@@ -109,6 +109,8 @@ REV_PATTERN = re.compile(
     re.VERBOSE,
 )
 
+PREFIX_PATTERN = re.compile(r"^[^\d]*")
+
 
 def sync(text: str, path: Path):
     for line in text.splitlines():
@@ -127,11 +129,18 @@ def sync(text: str, path: Path):
             prefix = rev_search.group("prefix")
             quote = rev_search.group("quote") or ""
             package = rev_search.group("package")
+            existing_version = rev_search.group("version")
+            (existing_version_prefix,) = PREFIX_PATTERN.findall(existing_version)
             lockfile = (path.parent / rev_search.group("lockfile")).resolve()
             sync_comment = rev_search.group("sync")
             manager = MANAGER_MAPPING[lockfile.name]
             version = manager.version_for(package, lockfile)
-            yield f"{prefix}{quote}{version}{quote}{sync_comment}"
+            tag_prefix = (
+                existing_version_prefix
+                if not version.startswith(existing_version_prefix)
+                else ""
+            )
+            yield f"{prefix}{quote}{tag_prefix}{version}{quote}{sync_comment}"
         else:
             yield line
 
@@ -150,15 +159,24 @@ parser.add_argument(
 
 def main():
     args = parser.parse_args()
-    for path in args.paths:
-        to_sync = Path(path).resolve()
-        if to_sync.suffix not in [".yaml", ".yml"]:
-            continue
-        data = "\n".join(sync(to_sync.read_text(), to_sync)).strip() + "\n"
-        if args.write:
-            path.write_text(data)
-        else:
-            print(data)
+    for given_path in args.paths:
+        to_sync = Path(given_path).resolve()
+        for path in {
+            to_sync,
+            to_sync.parent / ".pre-commit-config.yaml",
+            to_sync.parent / ".pre-commit-hooks.yaml",
+            to_sync.parent / ".pre-commit-config.yml",
+            to_sync.parent / ".pre-commit-hooks.yml",
+        }:
+            if path.suffix not in [".yaml", ".yml"]:
+                continue
+            if not path.exists():
+                continue
+            data = "\n".join(sync(path.read_text(), path)).strip() + "\n"
+            if args.write:
+                path.write_text(data)
+            else:
+                print(data)
 
 
 if __name__ == "__main__":
