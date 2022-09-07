@@ -1,0 +1,13 @@
+---
+- id: pre-commit-sync
+  name: pre-commit-sync
+  description: Sync pre-commit additional_dependencies from package manager lock files
+  entry: pre-commit-sync
+  args: [-w]
+  language: python
+  language_version: python3
+  files: |
+    (?x)^(
+        .pre-commit-hooks.yaml|
+        .pre-commit-config.yaml
+    )$
