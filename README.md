@@ -13,8 +13,8 @@ as well as security considerations. Pre-commit has similar behavior by
 pinning specific revisions of repos of hooks to be run. It even allows
 to update those revisions via `autoupdate` command. Nothing however
 enforces that those revisions match pinned versions in a lock file. This
-can make devs sad due to to local tools not matching pre-commit hooks.
-In additional it can cause security concerns as pre-commit can install
+can make devs sad due to local tools not matching pre-commit hooks. In
+additional it can cause security concerns as pre-commit can install
 versions of packages not formally reviewed in the dependency management
 process.
 
