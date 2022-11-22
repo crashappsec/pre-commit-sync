@@ -69,7 +69,7 @@ will be added as per the lock file.
 To use this hook, add it to pre-commit configuration:
 
 ```yaml
-- repo: https://github.com/miki725/pre-commit-sync
+- repo: https://github.com/crashappsec/pre-commit-sync
   rev: main
   hooks:
     - id: pre-commit-sync
