@@ -9,14 +9,14 @@ hooks. As it is a language-agnostic tool, it's configuration file is
 therefore independent from any of the traditional package managers such
 as `poetry` or `yarn`. Most package managers now have a lock file which
 allows to pin dependencies to specific versions for more reliable builds
-as well as security considerations. Pre-commit has similar behavior by
-pinning specific revisions of repos of hooks to be run. It even allows
-to update those revisions via `autoupdate` command. Nothing however
-enforces that those revisions match pinned versions in a lock file. This
-can make devs sad due to local tools not matching pre-commit hooks. In
-additional it can cause security concerns as pre-commit can install
-versions of packages not formally reviewed in the dependency management
-process.
+as well as security considerations. Pre-commit has similar behavior
+by allowing to pin specific revisions of repos of hooks to be run. It
+even allows to update those revisions via `autoupdate` command. Nothing
+however enforces that those revisions match pinned versions in a lock
+file. This can make devs sad due to local tools not matching pre-commit
+hooks. In addition it can cause security concerns as pre-commit can
+install versions of packages not formally reviewed in the dependency
+management process.
 
 This pre-commit hook is an attempt to make that better. By annotating
 pre-commit configuration file with a source of where to sync the
